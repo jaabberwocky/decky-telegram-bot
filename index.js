@@ -10,7 +10,7 @@ let parked = {};
 console.log("Initialised database storage...");
 
 bot.onText(/\/start/, async (msg) => {
-    bot.sendMessage(msg.chat.id, "Hello and welcome to Decky! This simple bot helps you remember which deck you have parked your car at.\n\n <b>Commands</b>\n/register: Register here first\n/park: Once registered, park your car here", { parse_mode: "HTML" });
+    bot.sendMessage(msg.chat.id, "Hello and welcome to Decky! This simple bot helps you remember which deck you have parked your car at.\n\n <b>Commands</b>\n/register: Register here first\n/park: Once registered, park your car here\n/where: Find out where your car is parked", { parse_mode: "HTML" });
 })
 
 bot.onText(/\/register/, async (msg) => {
@@ -35,11 +35,12 @@ bot.onText(/\/register/, async (msg) => {
                 console.log(decks);
 
                 // convert decks to array of arrays for usage as keyboard input
-                let newArr = []
-                decks.forEach(deck => newArr.push[deck]);
+                for (let i = 0; i < decks.length; i++) {
+                    decks[i] = ["/car_at " + decks[i]];
+                }
                 storage[msg.from.id] = {
                     "location": location,
-                    "decks": newArr
+                    "decks": decks
                 };
                 console.log(storage);
                 bot.sendMessage(msg.chat.id, "You are now registered!");
@@ -48,11 +49,22 @@ bot.onText(/\/register/, async (msg) => {
     }
 })
 
+// handles the parking function
+bot.onText(/\/car_at/, async (msg) => {
+    const deckParked = msg.text.split(" ")[1]
+    parked[msg.from.id] = {
+        deck: deckParked,
+        timestamp: Date.now()
+    }
+    console.log(parked);
+    bot.sendMessage(msg.chat.id, `Parked at ${deckParked}!`);
+})
+
 bot.onText(/\/park/, async (msg) => {
-    if (!msg.from.id in storage) {
-        bot.sendMessage(msg.chat.id, "You are not registered, please register first by going to /register");
+    if (!storage.hasOwnProperty(msg.from.id)) {
+        bot.sendMessage(msg.chat.id, "You are not registered, please register first using /register");
     } else {
-        const deckParkedPrompt = await bot.sendMessage(msg.chat.id, "Alright! Which deck are you at?", {
+        const deckParkedPrompt = await bot.sendMessage(msg.chat.id, `Alright, you are parking at ${storage[msg.from.id]["location"]}! Which deck are you at?`, {
             "reply_markup": {
                 "keyboard": storage[msg.from.id]['decks'],
                 "force_reply": true
@@ -62,11 +74,24 @@ bot.onText(/\/park/, async (msg) => {
             deck: deckParkedPrompt.text,
             timestamp: Date.now()
         }
-        bot.onReplyToMessage(msg.chat.id, deckParkedPrompt.message_id, `Parked at ${deckParkedPrompt.text}!`);
+        console.log(parked);
+        bot.onReplyToMessage(msg.chat.id, deckParkedPrompt.message_id, (msg) => {
+            parked[msg.from.id] = {
+                deck: deckParkedPrompt.text,
+                timestamp: Date.now()
+            }
+        });
     }
 })
 
+
+
 bot.onText(/\/where/, async (msg) => {
-    bot.sendMessage(msg.chat.id, `You parked at ${parked[msg.from.id]['deck']} at ${parked[msg.from.id]['timestamp']}`)
+    if (!parked.hasOwnProperty(msg.from.id)) {
+        bot.sendMessage(msg.chat.id, "You are not registered, please register first using /register");
+    } else {
+        const localeDateString = new Date(parked[msg.from.id]['timestamp']).toLocaleString();
+        bot.sendMessage(msg.chat.id, `Your car is parked at Deck ${parked[msg.from.id]['deck']} at ${localeDateString}`)
     }
+}
 )
