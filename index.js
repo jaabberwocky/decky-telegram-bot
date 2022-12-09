@@ -13,6 +13,10 @@ bot.onText(/\/start/, async (msg) => {
     bot.sendMessage(msg.chat.id, "Hello and welcome to Decky! This simple bot helps you remember which deck you have parked your car at.\n\n <b>Commands</b>\n/register: Register here first\n/park: Once registered, park your car here\n/where: Find out where your car is parked", { parse_mode: "HTML" });
 })
 
+bot.onText(/\/help/, async (msg) => {
+    bot.sendMessage(msg.chat.id, "<b>Commands</b>\n/register: Register here first\n/park: Once registered, park your car here\n/where: Find out where your car is parked", { parse_mode: "HTML" });
+})
+
 bot.onText(/\/register/, async (msg) => {
     if (msg.from.id in storage) {
         bot.sendMessage(msg.chat.id, `You are registered! Carpark deck location: ${storage[msg.from.id]}`);
