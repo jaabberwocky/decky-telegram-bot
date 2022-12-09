@@ -6,11 +6,11 @@ const bot = new TelegramBot(token, { polling: true });
 
 // temporary in-memory storage
 let storage = {};
+let parked = {};
 console.log("Initialised database storage...");
 
-// register
 bot.onText(/\/start/, async (msg) => {
-    bot.sendMessage(msg.chat.id, "Hello and welcome to Decky! This simple bot helps you remember which deck you have parked your car at.\n\n <b>Commands</b>\n/register: Register here first\n/park: Once registered, park your car here", {parse_mode: "HTML"});
+    bot.sendMessage(msg.chat.id, "Hello and welcome to Decky! This simple bot helps you remember which deck you have parked your car at.\n\n <b>Commands</b>\n/register: Register here first\n/park: Once registered, park your car here", { parse_mode: "HTML" });
 })
 
 bot.onText(/\/register/, async (msg) => {
@@ -33,9 +33,13 @@ bot.onText(/\/register/, async (msg) => {
             bot.onReplyToMessage(msg.chat.id, deckPrompt.message_id, async (msg) => {
                 const decks = msg.text.split(" ");
                 console.log(decks);
+
+                // convert decks to array of arrays for usage as keyboard input
+                let newArr = []
+                decks.forEach(deck => newArr.push[deck]);
                 storage[msg.from.id] = {
                     "location": location,
-                    decks: decks
+                    "decks": newArr
                 };
                 console.log(storage);
                 bot.sendMessage(msg.chat.id, "You are now registered!");
@@ -43,3 +47,26 @@ bot.onText(/\/register/, async (msg) => {
         })
     }
 })
+
+bot.onText(/\/park/, async (msg) => {
+    if (!msg.from.id in storage) {
+        bot.sendMessage(msg.chat.id, "You are not registered, please register first by going to /register");
+    } else {
+        const deckParkedPrompt = await bot.sendMessage(msg.chat.id, "Alright! Which deck are you at?", {
+            "reply_markup": {
+                "keyboard": storage[msg.from.id]['decks'],
+                "force_reply": true
+            }
+        })
+        parked[msg.from.id] = {
+            deck: deckParkedPrompt.text,
+            timestamp: Date.now()
+        }
+        bot.onReplyToMessage(msg.chat.id, deckParkedPrompt.message_id, `Parked at ${deckParkedPrompt.text}!`);
+    }
+})
+
+bot.onText(/\/where/, async (msg) => {
+    bot.sendMessage(msg.chat.id, `You parked at ${parked[msg.from.id]['deck']} at ${parked[msg.from.id]['timestamp']}`)
+    }
+)
