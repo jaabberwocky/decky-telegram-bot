@@ -9,21 +9,19 @@ let storage = {};
 console.log("Initialised database storage...");
 
 bot.onText(/\/start/, async (msg) => {
-    if (msg.from in storage) {
-        bot.sendMessage(msg.chat.id, `You are registered! Home location: ${storage[msg.from]}`);
+    if (msg.from.id in storage) {
+        bot.sendMessage(msg.chat.id, `You are registered! Carpark deck location: ${storage[msg.from.id]}`);
     } else {
-        const namePrompt = await bot.sendMessage(msg.chat.id, "What's your name?");
-        bot.onReplyToMessage(msg.chat.id, namePrompt.message_id, async (nameMsg) => {
-            const userName = nameMsg.text;
-            const locationPrompt = await bot.sendMessage(msg.chat.id, `Hello ${userName}! What's your location?`);
-
-            bot.onReplyToMessage(msg.chat.id, locationPrompt.message_id, async (locationMsg) => {
-                const location =locationMsg.text;
-                storage[userName] = location;
-                console.log(storage);
-                await bot.sendMessage(msg.chat.id, `Successfully registered ${userName} with location: ${location}!`);
-            })
-        })
-        
+        console.log(msg.from);
+        const locationPrompt = await bot.sendMessage(msg.chat.id, `Hello ${msg.from.username}! I haven't met you before. What's your carpark deck location?`, {
+            "reply_markup": {
+                "force_reply": true
+            }
+        });
+        bot.onReplyToMessage(msg.chat.id, locationPrompt.message_id, (msg) => {
+            storage[msg.from.id] = msg.text;
+            console.log(`Stored value ${msg.from.id}[${msg.text}]`);
+            bot.sendMessage(msg.chat.id, `I've registered you with location ${msg.text}!`);
+        })    
     }
 })
