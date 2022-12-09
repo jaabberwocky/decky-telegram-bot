@@ -85,7 +85,10 @@ bot.onText(/\/where/, async (msg) => {
     if (!parked.hasOwnProperty(msg.from.id)) {
         bot.sendMessage(msg.chat.id, "You are not registered, please register first using /register");
     } else {
-        const localeDateString = new Date(parked[msg.from.id]['timestamp']).toLocaleString();
+        const localeDateString = new Date(parked[msg.from.id]['timestamp']).toLocaleString('en-SG', {
+            timeZone: 'Asia/Singapore',
+            hour12: false
+          });
         bot.sendMessage(msg.chat.id, `Your car is parked at ${parked[msg.from.id]['deck']} at ${localeDateString}\nUse /help to see available commands`)
     }
 }
